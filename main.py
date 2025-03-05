@@ -31,11 +31,11 @@ class Node:
     strategy: Strategy
     answer: Answer
     is_complex: bool
-    parent_graph_id: str | None
+    parent_graph_id: uuid.UUID | None
 
 
 class AGoTGraph:
-    def __init__(self, graph_id: str) -> None:
+    def __init__(self, graph_id: uuid.UUID) -> None:
         """Создает новый граф.
 
         :param graph_id: уникальный идентификатор графа
@@ -210,7 +210,7 @@ def agot(
     lmax = kwargs.get("lmax", 3)
     nmax = kwargs.get("nmax", 3)
 
-    graph_id = str(uuid.uuid4())
+    graph_id = uuid.uuid4()
     current_graph = AGoTGraph(graph_id=graph_id)
 
     # Проходим по слоям: l = 0..lmax-1
