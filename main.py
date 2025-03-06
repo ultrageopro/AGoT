@@ -20,7 +20,7 @@ if __name__ == "__main__":
 
     final_answer, graph = agot(
         query=query,
-        cur_depth=0,
+        depth=0,
         max_depth=MAX_DEPTH,
         lmax=L_MAX,
         nmax=N_MAX,

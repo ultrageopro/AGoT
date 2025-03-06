@@ -4,7 +4,7 @@ version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = []
+dependencies = ["pre-commit>=4.1.0", "pytest>=8.3.5"]
 
 [tool.ruff]
 lint.select = ["ALL"] # Enable all available linters
@@ -24,10 +24,8 @@ preview = true # Enable preview features
 # My personal preferences
 line-length = 88
 indent-width = 4
-
-[tool.ruff.lint.pylint]
-max-locals = 20
-lint.pylint.max-positional-args = 6
+lint.pylint.max-args = 10
+lint.pylint.max-locals = 20
 
 [tool.mypy] # Mypy configuration required for type checking
 python_version = "3.13"
