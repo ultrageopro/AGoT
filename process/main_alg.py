@@ -4,9 +4,9 @@ import uuid
 from typing import Unpack
 
 from modules import AGoTGraph, Node
-from modules.base import AGoTParams, Answer, Heritage
+from modules.base import AGoTParams, Answer, Edge, Heritage, Strategy, Thought
 
-from ._funcs import (
+from ._process_functions import (
     evaluate_thought,
     final_thought_selector,
     is_complex,
@@ -16,11 +16,53 @@ from ._funcs import (
 )
 
 
+def _get_thoughts(
+    layer_num: int,
+    depth: int,
+    query: str,
+    parent_graph: AGoTGraph | None,
+    nmax: int,
+    current_graph: AGoTGraph,
+) -> tuple[list[Thought], Strategy, list[Edge]]:
+    """Генерирует мысли и стратегию в зависимости от текущего слоя и глубины.
+
+    В зависимости от номера слоя и глубины эта функция выбирает соответствующий
+    процесс генерации мыслей для графа AGoT. Она определяет начальные мысли
+    и стратегию для верхнего уровня, вложенных слоев графа или общих случаев.
+
+    Args:
+        layer_num (int): Текущий номер слоя в графе.
+        depth (int): Текущая глубина графа.
+        query (str): Исходный запрос или задача для обработки.
+        parent_graph (AGoTGraph | None): Родительский граф, если есть.
+        nmax (int): Максимальное количество генерируемых мыслей.
+        current_graph (AGoTGraph): Граф, который в данный момент обрабатывается.
+
+    Returns:
+        tuple[list[Thought], Strategy, list[Edge]]: Кортеж, содержащий
+        список сгенерированных мыслей, используемую стратегию и
+        список рёбер, созданных в процессе.
+
+    """
+    edges: list[Edge] = []
+    if layer_num == 0 and depth == 0:
+        # Верхний уровень, первый слой
+        thoughts, strategy = t_empty(query, nmax)
+    elif layer_num == 0:
+        # Первый слой вложенного графа
+        thoughts, strategy = t_0(query, parent_graph, nmax)
+    else:
+        # Остальные случаи
+        thoughts, strategy, edges = t_general(query, current_graph, nmax)
+
+    return thoughts, strategy, edges
+
+
 # -------------------------
 # Главная функция AGoT
 # -------------------------
 def agot(
-    q: str,
+    query: str,
     depth: int,
     parent_graph: AGoTGraph | None = None,
     current_heritage: list[tuple[int, int]] | None = None,
@@ -29,7 +71,7 @@ def agot(
     """Return the final answer and the final graph using AGoT algorithm.
 
     AGoT(q, h, Ghp) из статьи, где:
-      - q: исходный запрос
+      - query: исходный запрос
       - depth: текущая глубина вложенности
       - max_depth: максимальная глубина
       - parent_graph: граф-родитель (может быть None, если верхний уровень)
@@ -52,17 +94,16 @@ def agot(
     # Проходим по слоям: layer = 0..(lmax-1)
     for layer in range(lmax):
         # Генерация мыслей и стратегии
-        if layer == 0 and depth == 0:
-            # Верхний уровень, первый слой
-            thoughts, strategy = t_empty(q, nmax)
-        elif layer == 0:
-            # Первый слой вложенного графа
-            thoughts, strategy = t_0(q, parent_graph, nmax)
-        else:
-            # Остальные случаи
-            thoughts, strategy, edges = t_general(q, current_graph, nmax)
-            for e in edges:
-                current_graph.add_edge(*e)
+        thoughts, strategy, edges = _get_thoughts(
+            layer_num=layer,
+            depth=depth,
+            query=query,
+            parent_graph=parent_graph,
+            nmax=nmax,
+            current_graph=current_graph,
+        )
+        for e in edges:
+            current_graph.add_edge(*e)
 
         # Перебираем мысли текущего слоя
         for i, t in enumerate(thoughts):
@@ -79,9 +120,8 @@ def agot(
             complex_flag = is_complex(t, current_graph)
 
             # Создаём новый узел
-            node_id = uuid.uuid4()
             node = Node(
-                node_id=node_id,
+                node_id=uuid.uuid4(),
                 thought=t,
                 strategy=strategy,
                 answer="",
@@ -94,7 +134,7 @@ def agot(
             # Если сложная мысль и глубина не достигла max_depth, уходим в рекурсию
             if complex_flag and depth < max_depth:
                 sub_answer, _ = agot(
-                    q=t,
+                    query=t,
                     depth=depth + 1,
                     max_depth=max_depth,
                     parent_graph=current_graph,

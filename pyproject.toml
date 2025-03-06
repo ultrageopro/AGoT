@@ -25,6 +25,10 @@ preview = true # Enable preview features
 line-length = 88
 indent-width = 4
 
+[tool.ruff.lint.pylint]
+max-locals = 20
+lint.pylint.max-positional-args = 6
+
 [tool.mypy] # Mypy configuration required for type checking
 python_version = "3.13"
 strict = true

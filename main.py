@@ -13,14 +13,14 @@ logger = logging.getLogger(__name__)
 
 
 if __name__ == "__main__":
-    query = "Какова комовинговая дистанция для объекта на красном смещении z=1?"
+    query = "Какова Комовинговая дистанция для объекта на красном смещении z=1?"
     MAX_DEPTH = 1
     L_MAX = 3
     N_MAX = 3
 
     final_answer, graph = agot(
-        q=query,
-        depth=0,
+        query=query,
+        cur_depth=0,
         max_depth=MAX_DEPTH,
         lmax=L_MAX,
         nmax=N_MAX,
